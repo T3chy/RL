@@ -64,6 +64,29 @@ def maxAction(Q, state, actions):
     values = np.array([Q[state,a] for a in actions])
     action = np.argmax(values)
     return actions[action]
+def renderPolicy(Q,env):
+    actionz = []
+    policy = []
+    qlen = env.m * env.n #* len(env.possibleActions)
+    for index in range(qlen):
+        if index == 0 or index == 81:
+            continue
+        for action in env.possibleActions:
+           actionz.append([Q[index, action],action])
+        print(max(actionz)[1])
+        policy.append(max(actionz)[1])
+        actionz = []
+    count = 0
+    print('-------------------------------')
+    for choice in policy:
+        if count == env.m:
+            print('\n')
+            count = 0
+        count += 1
+        print(choice, end="\t")
+    print("X")
+    print('\n')
+    print('-------------------------------')
 if __name__ == '__main__':
     env = GridWorld(9,9)
     ALPHA = 0.1
@@ -75,10 +98,10 @@ if __name__ == '__main__':
             Q[state,action] = 0
     numGames = 50000
     totalRewards = np.zeros(numGames)
-    env.render()
     for i in range(numGames):
         if i % 5000 == 0:
             print('starting game', i)
+            env.render()
         done = False
         epRewards = 0
         observation = env.reset()
@@ -97,5 +120,4 @@ if __name__ == '__main__':
         else:
             eps = 0
         totalRewards[i] = epRewards
-        plt.plot(totalRewards)
-        plt.show()
+    renderPolicy(Q,env)
