@@ -6,12 +6,14 @@ class GridWorld(object):
         self.m = m
         self.n = n
         self.stateSpace = [i for i in range(self.m*self.n)]
-        self.stateSpace.remove(self.m*self.n-1)
+        self.end = self.m*self.n-4
+        self.stateSpace.remove(self.end)
         self.stateSpacePlus = [i for i in range(self.m*self.n)]
         self.actionSpace = {'Up': -self.m, 'Down': self.m, 
                 'Left': -1, 'Right': 1}
         self.possibleActions = ['Up', 'Down', 'Left', 'Right']
-        self.agentPosition = 0
+        self.agentPosition = 0 # doesn't matter as long as it's not the end cell
+        self.obstacles = [11, 24, 33]
     def isTerminalState(self, state):
         return(state in self.stateSpacePlus and state not in self.stateSpace)
     def getAgentRowAndColumn(self):
@@ -24,12 +26,14 @@ class GridWorld(object):
         self.agentPosition = state
         x, y = self.getAgentRowAndColumn()
         self.grid[x][y] = 1
-    def offGridMove(self, newState, oldState):
+    def badMove(self, newState, oldState):
         if newState not in self.stateSpacePlus:
             return True
         elif oldState % self.m == 0 and newState % self.m == self.m - 1:
             return True
         elif oldState % self.m == self.m - 1 and newState % self.m == 0:
+            return True
+        elif newState in self.obstacles:
             return True
         else:
             return False
@@ -37,7 +41,7 @@ class GridWorld(object):
         x, y = self.getAgentRowAndColumn()
         resultingState = self.agentPosition + self.actionSpace[action]
         reward = -1 if not self.isTerminalState(resultingState) else 0
-        if not self.offGridMove(resultingState, self.agentPosition):
+        if not self.badMove(resultingState, self.agentPosition):
             self.setState(resultingState)
             return resultingState, reward, self.isTerminalState(self.agentPosition), None
         else:
@@ -74,22 +78,34 @@ def renderPolicy(Q,env):
         for action in env.possibleActions:
            actionz.append([Q[index, action],action])
         for i in actionz:
-            if i[0] != 0:
-                policy.append(max(actionz)[1])
-                break
-            else:
-                policy.append("end")
-                break
+            policy.append(max(actionz)[1])
+            break
         actionz = []
     count = 1
     print('-------------------------------')
     print("start", end='\t')
+    place = 1
     for choice in policy:
         if count == env.m:
             print('\n')
             count = 0
         count += 1
-        print(choice, end="\t")
+        if place in env.obstacles:
+            print("ROCK", end="\t")
+        elif place == env.end:
+            print("END", end="\t")
+        else:
+            if choice == "Up":
+                print("↑", end="\t")
+            elif choice == "Down":
+                print("↓", end="\t")
+            elif choice == "Right":
+                print("→", end='\t')
+            elif choice == "Left":
+                print('←', end='\t')
+            else:
+                print("??", end='\t')
+        place += 1
     print('\n')
     print('-------------------------------')
 if __name__ == '__main__':
@@ -101,7 +117,7 @@ if __name__ == '__main__':
     for state in env.stateSpacePlus:
         for action in env.possibleActions:
             Q[state,action] = 0
-    numGames = 1000000
+    numGames = 10000
     totalRewards = np.zeros(numGames)
     observation = env.reset()
     for i in range(numGames):
