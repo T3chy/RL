@@ -8,7 +8,7 @@ class GridWorld(object):
         self.stateSpace = [i for i in range(self.m*self.n)]
         self.stateSpace.remove(self.m*self.n-1)
         self.stateSpacePlus = [i for i in range(self.m*self.n)]
-        self.actionSpace = {'Up': self.m, 'Down': self.m, 
+        self.actionSpace = {'Up': -self.m, 'Down': self.m, 
                 'Left': -1, 'Right': 1}
         self.possibleActions = ['Up', 'Down', 'Left', 'Right']
         self.agentPosition = 0
@@ -73,22 +73,27 @@ def renderPolicy(Q,env):
             continue
         for action in env.possibleActions:
            actionz.append([Q[index, action],action])
-        print(max(actionz)[1])
-        policy.append(max(actionz)[1])
+        for i in actionz:
+            if i[0] != 0:
+                policy.append(max(actionz)[1])
+                break
+            else:
+                policy.append("end")
+                break
         actionz = []
-    count = 0
+    count = 1
     print('-------------------------------')
+    print("start", end='\t')
     for choice in policy:
         if count == env.m:
             print('\n')
             count = 0
         count += 1
         print(choice, end="\t")
-    print("X")
     print('\n')
     print('-------------------------------')
 if __name__ == '__main__':
-    env = GridWorld(9,9)
+    env = GridWorld(7,7)
     ALPHA = 0.1
     discount = 1 # infinitley farsighted
     eps = 1 # greedy
@@ -96,12 +101,15 @@ if __name__ == '__main__':
     for state in env.stateSpacePlus:
         for action in env.possibleActions:
             Q[state,action] = 0
-    numGames = 50000
+    numGames = 1000000
     totalRewards = np.zeros(numGames)
+    observation = env.reset()
     for i in range(numGames):
         if i % 5000 == 0:
             print('starting game', i)
-            env.render()
+            print("Current Policy:")
+            renderPolicy(Q,env)
+            #env.render()
         done = False
         epRewards = 0
         observation = env.reset()
