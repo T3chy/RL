@@ -1,19 +1,19 @@
 import numpy as np 
 import matplotlib.pyplot as plt
 class GridWorld(object):
-    def __init__(self,m,n):
+    def __init__(self,m,n,obs,end):
         self.grid = np.zeros((m,n))
         self.m = m
         self.n = n
         self.stateSpace = [i for i in range(self.m*self.n)]
-        self.end = self.m*self.n-4
+        self.end = abs(end-self.m*self.n)
         self.stateSpace.remove(self.end)
         self.stateSpacePlus = [i for i in range(self.m*self.n)]
         self.actionSpace = {'Up': -self.m, 'Down': self.m, 
                 'Left': -1, 'Right': 1}
         self.possibleActions = ['Up', 'Down', 'Left', 'Right']
         self.agentPosition = 0 # doesn't matter as long as it's not the end cell
-        self.obstacles = [11, 24, 33]
+        self.obstacles = obs
     def isTerminalState(self, state):
         return(state in self.stateSpacePlus and state not in self.stateSpace)
     def getAgentRowAndColumn(self):
@@ -108,9 +108,9 @@ def renderPolicy(Q,env):
         place += 1
     print('\n')
     print('-------------------------------')
-if __name__ == '__main__':
-    env = GridWorld(7,7)
-    ALPHA = 0.1
+def main(m,n,obs,end,alpha=.1,discount=1,eps=1):
+    env = GridWorld(m,n,obs,end)
+    ALPHA = alpha
     discount = 1 # infinitley farsighted
     eps = 1 # greedy
     Q = {}
@@ -145,3 +145,5 @@ if __name__ == '__main__':
             eps = 0
         totalRewards[i] = epRewards
     renderPolicy(Q,env)
+if __name__ == "__main__":
+    main(7,7,[28,29,30,31,32,33],5)
