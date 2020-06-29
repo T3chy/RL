@@ -1,58 +1,52 @@
-import cv2 as cv
+import cv2
+from imutils import contours
 import numpy as np
-image  = cv.imread("sudoku.jpg")
+def p2m(img):
+	# Load image, grayscale, and adaptive threshold
+	image = cv2.imread(img)
+	gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
+	thresh = cv2.adaptiveThreshold(gray,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV,57,5)
+	# Filter out all numbers and noise to isolate only boxes
+	cnts = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+	cnts = cnts[0] if len(cnts) == 2 else cnts[1]
+	for c in cnts:
+		area = cv2.contourArea(c)
+		if area < 1000:
+			cv2.drawContours(thresh, [c], -1, (0,0,0), -1)
+	cv2.imwrite('thresh.jpg',thresh)
+	# Fix horizontal and vertical lines
+	vertical_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1,5))
+	thresh = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, vertical_kernel, iterations=9)
+	horizontal_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5,1))
+	thresh = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, horizontal_kernel, iterations=4)
+	# Sort by top to bottom and each row by left to right
+	invert = 255 - thresh
+	cnts = cv2.findContours(invert, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+	cnts = cnts[0] if len(cnts) == 2 else cnts[1]
+	(cnts, _) = contours.sort_contours(cnts, method="top-to-bottom")
+	sudoku_rows = []
+	row = []
+	for (i, c) in enumerate(cnts, 1):
+		area = cv2.contourArea(c)
+		if area < 50000:
+			row.append(c)
+			if i % 9 == 0:  
+				(cnts, _) = contours.sort_contours(row, method="left-to-right")
+				sudoku_rows.append(cnts)
+				row = []
+	# Iterate through each box
+	n = len(sudoku_rows)
+	m = len(sudoku_rows[0])
+	print(n)
+	print(m)
+	for row in sudoku_rows:
+		for c in row:
+			mask = np.zeros(image.shape, dtype=np.uint8)
+			cv2.drawContours(mask, [c], -1, (255,255,255), -1)
+			result = cv2.bitwise_and(image, mask)
+			result[mask==0] = 255
+			cv2.imshow('result.jpg', mask)
 
-blur = cv.GaussianBlur(gray, (5,5), 0)
-
-thresh = cv.adaptiveThreshold(blur, 255, 1, 1, 11, 2)
-contours, _ = cv.findContours(thresh, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
-max_area = 0
-c = 0
-for i in contours:
-        area = cv.contourArea(i)
-        if area > 1000:
-                if area > max_area:
-                    max_area = area
-                    best_cnt = i
-                #    image = cv.drawContours(image, contours, c, (0, 255, 0), 3)
-        c+=1
-lowest = 10000000000
-highest = 0
-rectcoords = [[],[]]
-for i in best_cnt:
-    if not i[0][1]:
-        continue
-    if i[0][0] + i[0][1] < lowest:
-        rectcoords[0] = [i[0][0],i[0][1]]
-        lowest = i[0][0] + i[0][1]
-    elif i[0][0] + i[0][1] > highest:
-        rectcoords[1] = [i[0][0],i[0][1]]
-        highest = i[0][0] + i[0][1]
-cv.rectangle(image,(rectcoords[0][0], rectcoords[0][1]),(rectcoords[1][0],rectcoords[1][1]),3, 4)
-
-mask = np.zeros((gray.shape),np.uint8)
-cv.drawContours(mask,[best_cnt],0,255,-1)
-cv.drawContours(mask,[best_cnt],0,0,2)
-
-out = np.zeros_like(gray)
-out[mask == 255] = gray[mask == 255]
-
-blur = cv.GaussianBlur(out, (5,5), 0)
-
-thresh = cv.adaptiveThreshold(blur, 255, 1, 1, 11, 2)
-
-contours, _ = cv.findContours(thresh, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
-
-c = 0
-for i in contours:
-        area = cv.contourArea(i)
-        if area > 1000/2:
-            cv.drawContours(image, contours, c, (0, 255, 0), 3)
-        c+=1
-print(rectcoords)
-image = image[rectcoords[0][0]:rectcoords[1][0],rectcoords[0][1]:rectcoords[1][1]]
-cv.imshow("Final Image", image)
-cv.waitKey(0)
-cv.destroyAllWindows()
+			cv2.waitKey(175)
+p2m('blank.png')
