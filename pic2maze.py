@@ -2,6 +2,8 @@ import cv2
 from imutils import contours
 import numpy as np
 import time
+def isObstacle(img): ## actually write this lol
+	return False
 def p2m(img,height):
 	# Load image, grayscale, and adaptive threshold
 	image = cv2.imread(img)
@@ -30,6 +32,7 @@ def p2m(img,height):
 
 	sudoku_rows = []
 	row = []
+	cnts = cnts[2:]
 	for (i, c) in enumerate(cnts, 1):
 		area = cv2.contourArea(c)
 		if True:
@@ -38,23 +41,26 @@ def p2m(img,height):
 				(cnts, _) = contours.sort_contours(row, method="left-to-right")
 				sudoku_rows.append(cnts)
 				row = []
-	m = len(row)
-	n = len(row[0])
+
 	# Iterate through each box
+	pos = 0
+	obs = []
 	for row in sudoku_rows:
+		print('row')
 		for c in row:
+			print('cell')
+			pos += 1
 			mask = np.zeros(image.shape, dtype=np.uint8)
+			print(mask.shape)
 			cv2.drawContours(mask, [c], -1, (255,255,255), -1)
 			result = cv2.bitwise_and(image, mask)
 			result[mask==0] = 255
-			cv2.imwrite('result.jpg',result)
-			# cv2.imshow('result', result)
-			# cv2.waitKey(175)
-
-	cv2.imshow('thresh', thresh)
+			cv2.imwrite('hel.jpg',result)
+			if isObstacle(result):
+				obs.append(pos)
+			time.sleep(1)
 	cv2.imwrite('thresh.jpg',thresh)
-	cv2.imshow('invert', invert)
 	cv2.imwrite('invert.jpg',invert)
-	cv2.waitKey()
-	return([m,n])
-print(p2m('IMG_0954.JPG',5))
+	# cv2.waitKey()
+	return( pos, obs)
+print(p2m('IMG_0954.jpg',5))
