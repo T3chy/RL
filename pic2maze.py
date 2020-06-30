@@ -3,7 +3,15 @@ from imutils import contours
 import numpy as np
 import time
 def isObstacle(img): ## actually write this lol
-	return False
+	grayimg = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+	(thresh, blackAndWhiteImage) = cv2.threshold(grayimg, 20, 255, cv2.THRESH_BINARY)
+	cv2.imwrite('Blackwhiteimage.jpg', blackAndWhiteImage)
+	cv2.waitKey(175)
+	print(np.mean(blackAndWhiteImage))
+	if np.mean(blackAndWhiteImage) > 254.9:
+		return False
+	else: 
+		return True
 def p2m(img,height):
 	# Load image, grayscale, and adaptive threshold
 	image = cv2.imread(img)
@@ -30,7 +38,7 @@ def p2m(img,height):
 	cnts = cnts[0] if len(cnts) == 2 else cnts[1]
 	(cnts, _) = contours.sort_contours(cnts, method="top-to-bottom")
 
-	sudoku_rows = []
+	rows = []
 	row = []
 	cnts = cnts[2:]
 	for (i, c) in enumerate(cnts, 1):
@@ -39,28 +47,27 @@ def p2m(img,height):
 			row.append(c)
 			if i % height == 0:  
 				(cnts, _) = contours.sort_contours(row, method="left-to-right")
-				sudoku_rows.append(cnts)
+				rows.append(cnts)
 				row = []
-
-	# Iterate through each box
+	cv2.imwrite('thresh.jpg',thresh)
+	cv2.imwrite('invert.jpg',invert)
+	return(rows)
+def checkobs(img,rows):
+	image = cv2.imread(img)
 	pos = 0
 	obs = []
-	for row in sudoku_rows:
+	for row in rows:
 		print('row')
 		for c in row:
 			print('cell')
 			pos += 1
+			print(pos)
 			mask = np.zeros(image.shape, dtype=np.uint8)
-			print(mask.shape)
 			cv2.drawContours(mask, [c], -1, (255,255,255), -1)
 			result = cv2.bitwise_and(image, mask)
 			result[mask==0] = 255
 			cv2.imwrite('hel.jpg',result)
 			if isObstacle(result):
 				obs.append(pos)
-			time.sleep(1)
-	cv2.imwrite('thresh.jpg',thresh)
-	cv2.imwrite('invert.jpg',invert)
-	# cv2.waitKey()
-	return( pos, obs)
-print(p2m('IMG_0954.jpg',5))
+	return(pos, obs)
+print(checkobs('obsmaze.png',p2m('IMG_0954.JPG',5)))
