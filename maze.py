@@ -1,5 +1,5 @@
 import numpy as np 
-import matplotlib.pyplot as plt
+import pic2maze
 class GridWorld(object):
     def __init__(self,m,n,obs,end):
         self.grid = np.zeros((m,n))
@@ -117,7 +117,7 @@ def main(m,n,obs,end,alpha=.1,discount=1,eps=1):
     for state in env.stateSpacePlus:
         for action in env.possibleActions:
             Q[state,action] = 0
-    numGames = 10000
+    numGames = 20000
     totalRewards = np.zeros(numGames)
     observation = env.reset()
     for i in range(numGames):
@@ -146,4 +146,9 @@ def main(m,n,obs,end,alpha=.1,discount=1,eps=1):
         totalRewards[i] = epRewards
     renderPolicy(Q,env)
 if __name__ == "__main__":
-    main(7,7,[28,29,30,31,32,33],5)
+    rowidth = 5
+    maze = pic2maze.main("IMG_0954.JPG","obsmaze.png",rowidth)
+    n = int(maze[0] / rowidth)
+    m = int(rowidth)
+    obs = maze[1]
+    main(m,n,obs,1)

@@ -57,11 +57,8 @@ def checkobs(img,rows):
 	pos = 0
 	obs = []
 	for row in rows:
-		print('row')
 		for c in row:
-			print('cell')
 			pos += 1
-			print(pos)
 			mask = np.zeros(image.shape, dtype=np.uint8)
 			cv2.drawContours(mask, [c], -1, (255,255,255), -1)
 			result = cv2.bitwise_and(image, mask)
@@ -70,4 +67,5 @@ def checkobs(img,rows):
 			if isObstacle(result):
 				obs.append(pos)
 	return(pos, obs)
-print(checkobs('obsmaze.png',p2m('IMG_0954.JPG',5)))
+def main(blank,obs,width):
+	return(checkobs('obsmaze.png',p2m('IMG_0954.JPG',width)))
